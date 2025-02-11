@@ -33,10 +33,19 @@ export const useNotesStore = defineStore('notes', {
       return note.id
     },
 
-    updateNote(id: string, updates: Partial<Note>) {
-      const index = this.notes.findIndex(note => note.id === id)
-      if (index !== -1) {
-        this.notes[index] = { ...this.notes[index], ...updates }
+    updateNote(noteOrId: string | Note, updates?: Partial<Note>) {
+      if (typeof noteOrId === 'string') {
+        // Update by ID and partial updates
+        const index = this.notes.findIndex(note => note.id === noteOrId)
+        if (index !== -1 && updates) {
+          this.notes[index] = { ...this.notes[index], ...updates }
+        }
+      } else {
+        // Update with full note object
+        const index = this.notes.findIndex(note => note.id === noteOrId.id)
+        if (index !== -1) {
+          this.notes[index] = noteOrId
+        }
       }
     },
 

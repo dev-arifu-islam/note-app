@@ -38,28 +38,7 @@
           </div>
           <p class="text-gray-600 mb-4 line-clamp-3">{{ note.description }}</p>
 
-          <!-- Image preview for image type notes -->
-          <img
-            v-if="note.type === NOTE_TYPES.IMAGE && 'imageUrl' in note && note.imageUrl"
-            :src="note.imageUrl"
-            alt="Note image"
-            class="w-full h-40 object-cover rounded-md mb-4"
-          />
-
-          <!-- Checkbox list for checkbox type notes -->
-          <div v-if="note.type === NOTE_TYPES.CHECKBOX && 'items' in note && note.items?.length" class="mb-4">
-            <div
-              v-for="item in note.items.slice(0, 3)"
-              :key="item.id"
-              class="flex items-center gap-2"
-            >
-              <input type="checkbox" :checked="item.checked" disabled class="rounded" />
-              <span class="text-sm text-gray-600">{{ item.text }}</span>
-            </div>
-            <div v-if="note.items.length > 3" class="text-sm text-gray-500 mt-1">
-              +{{ note.items.length - 3 }} more items
-            </div>
-          </div>
+          <DynamicNoteType :note="note" mode="preview" />
         </NuxtLink>
 
         <button
@@ -99,8 +78,10 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useNotesStore, NOTE_TYPES, type NoteType } from '~/stores/notes'
+import { useNotesStore } from '~/stores/notes'
 import registry from '~/types/notes/registry'
+import { NOTE_TYPES, type NoteType } from '~/types/notes/registry'
+import DynamicNoteType from '~/components/notes/DynamicNoteType.vue'
 
 const notesStore = useNotesStore()
 const selectedType = ref<NoteType | null>(null)
