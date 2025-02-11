@@ -44,6 +44,7 @@
 <script setup lang="ts">
 import type { BaseNote } from '~/types/notes/base'
 import type { ImageNote } from '~/types/notes/implementations'
+import BaseNoteType from '~/components/notes/BaseNoteType.vue'
 
 const props = defineProps<{
   note: BaseNote

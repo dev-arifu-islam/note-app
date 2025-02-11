@@ -1,4 +1,5 @@
-import { BaseNote, NoteTypeImplementation } from './base'
+import type { BaseNote } from './base'
+import type { NoteTypeImplementation } from './base'
 
 // Default Note
 export interface DefaultNote extends BaseNote {

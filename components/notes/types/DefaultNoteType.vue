@@ -8,6 +8,7 @@
 
 <script setup lang="ts">
 import type { BaseNote } from '~/types/notes/base'
+import BaseNoteType from '~/components/notes/BaseNoteType.vue'
 
 defineProps<{
   note: BaseNote
