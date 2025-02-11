@@ -42,127 +42,146 @@ yarn dev
 
 ## Adding New Note Types
 
-The application is designed to be easily extensible with new note types. Follow these steps to add a new note type:
+This guide explains how to add new note types to the application.
 
-### 1. Define the Note Interface
+### 1. Define the Note Type Interface
 
-In `types/notes/implementations.ts`, add your new note interface:
+In `/types/notes/implementations.ts`, add your new note type interface:
 
 ```typescript
-export interface LinkNote extends BaseNote {
-  type: 3  // Use a unique number
-  url: string
-  // Add any additional properties
-  favicon?: string
+export interface YourNewNote extends BaseNote {
+  type: number; // Use a unique number that hasn't been used by other types
+  // Add your custom properties here
+  customField1: string;
+  customField2: number;
+  // etc...
 }
 ```
 
-### 2. Create the Implementation
+### 2. Create the Implementation Class
 
-In the same file, create a class that implements `NoteTypeImplementation`:
+In the same file, add the implementation class:
 
 ```typescript
-export class LinkNoteImplementation implements NoteTypeImplementation<LinkNote> {
-  create(): LinkNote {
+export class YourNewNoteImplementation implements NoteTypeImplementation<YourNewNote> {
+  create(): YourNewNote {
     return {
-      id: crypto.randomUUID(),
-      title: '',
-      description: '',
-      type: 3,
-      url: '',
-      createdAt: new Date().toISOString()
-    }
+      type: YOUR_TYPE_NUMBER,
+      // Initialize your custom fields
+      customField1: '',
+      customField2: 0,
+    };
   }
 
-  validate(note: LinkNote): boolean {
-    return note.title.trim().length > 0 && 
-           note.url.trim().length > 0 &&
-           this.isValidUrl(note.url)
+  validate(note: YourNewNote): boolean {
+    // Add your validation logic
+    return true;
   }
 
-  getDefaultData(): Partial<LinkNote> {
+  getDefaultData(): Partial<YourNewNote> {
+    // Return default data for your note type
     return {
-      url: ''
-    }
-  }
-
-  // Add any helper methods
-  private isValidUrl(url: string): boolean {
-    try {
-      new URL(url)
-      return true
-    } catch {
-      return false
-    }
+      customField1: 'default',
+      customField2: 0,
+    };
   }
 }
 ```
 
-### 3. Register the Note Type
+### 3. Create the Vue Component
 
-In `types/notes/registry.ts`:
-
-1. Add the type to NOTE_TYPES:
-```typescript
-export const NOTE_TYPES = {
-  DEFAULT: 0,
-  IMAGE: 1,
-  CHECKBOX: 2,
-  LINK: 3  // Add your new type
-} as const
-```
-
-2. Register the implementation:
-```typescript
-registry.register(
-  {
-    id: 3,
-    name: 'Link',
-    icon: 'link',  // Optional: icon name
-    color: {
-      bg: 'bg-blue-100',
-      text: 'text-blue-800'
-    }
-  },
-  new LinkNoteImplementation()
-)
-```
-
-### 4. Update Type Union
-
-In `stores/notes.ts`, update the Note type union:
-
-```typescript
-export type Note = DefaultNote | ImageNote | CheckboxNote | LinkNote  // Add your new type
-```
-
-### 5. Add UI Components
-
-1. Update the note edit form in `pages/note/[id].vue`:
+Create a new file in `/components/notes/types/YourNewNoteType.vue`:
 
 ```vue
-<!-- Link type specific fields -->
-<div v-if="editedNote.type === NOTE_TYPES.LINK">
-  <label class="block text-sm font-medium text-gray-700 mb-1">URL</label>
-  <input
-    v-model="editedNote.url"
-    type="url"
-    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-    placeholder="https://example.com"
-  />
-</div>
+<template>
+  <div class="your-new-note">
+    <!-- Add your note type UI here -->
+    <input v-model="note.customField1" />
+    <input type="number" v-model="note.customField2" />
+  </div>
+</template>
+
+<script setup lang="ts">
+import type { YourNewNote } from '~/types/notes/implementations'
+
+const props = defineProps<{
+  note: YourNewNote
+  readonly?: boolean
+}>()
+
+// Add your component logic here
+</script>
+
+<style scoped>
+.your-new-note {
+  /* Add your styles here */
+}
+</style>
 ```
 
-2. Update the note card display in `components/NoteCard.vue`:
+### 4. Register the Note Type
+
+Update `/components/notes/DynamicNoteType.vue` to include your new note type:
 
 ```vue
-<!-- Link preview -->
-<div v-if="note.type === NOTE_TYPES.LINK && note.url">
-  <a :href="note.url" target="_blank" class="text-blue-600 hover:underline">
-    {{ note.url }}
-  </a>
-</div>
+<script setup lang="ts">
+import YourNewNoteType from './types/YourNewNoteType.vue'
+
+// Add to components object
+const components = {
+  // ... existing components
+  'note-type-YOUR_TYPE': YourNewNoteType
+}
+</script>
 ```
+
+### 5. Add Preview Support (Optional)
+
+If your note type needs a custom preview, create a preview component in the same directory:
+
+```vue
+<template>
+  <div class="your-new-note-preview">
+    <!-- Add your preview UI here -->
+    <p>{{ note.customField1 }}</p>
+  </div>
+</template>
+
+<script setup lang="ts">
+import type { YourNewNote } from '~/types/notes/implementations'
+
+defineProps<{
+  note: YourNewNote
+}>()
+</script>
+```
+
+## Example Note Types
+
+The app currently includes several note types you can reference:
+
+1. Default Note (type: 0) - Basic text note
+2. Image Note (type: 1) - Notes with image support
+3. Checkbox Note (type: 2) - Todo-style notes with checkboxes
+4. Link Note (type: 3) - Notes with URL support
+
+## Best Practices
+
+1. Always use a unique type number for each note type
+2. Implement proper validation in the implementation class
+3. Make sure your UI is responsive and accessible
+4. Follow the existing component naming conventions
+5. Add proper TypeScript types for all properties
+6. Include error handling for required fields
+7. Test your note type thoroughly before deployment
+
+## Need Help?
+
+If you need examples, look at the existing note type implementations in:
+- `/types/notes/implementations.ts`
+- `/components/notes/types/`
+
+Each existing note type follows this pattern and can serve as a reference for your implementation.
 
 ## Architecture
 
