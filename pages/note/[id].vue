@@ -88,52 +88,73 @@
         </div>
 
         <!-- Checkbox type specific fields -->
-        <div v-if="editedNote.type === NOTE_TYPES.CHECKBOX">
-          <div class="flex items-center justify-between mb-2">
-            <label class="block text-sm font-medium text-gray-700">Checklist Items</label>
+        <template v-if="editedNote.type === NOTE_TYPES.CHECKBOX">
+          <div class="space-y-4">
+            <div v-for="(item, index) in editedNote.items" :key="item.id" class="flex items-center gap-2">
+              <input
+                v-model="item.checked"
+                type="checkbox"
+                class="rounded"
+              />
+              <input
+                v-model="item.text"
+                type="text"
+                class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Item text"
+              />
+              <button
+                @click="removeCheckboxItem(index)"
+                class="p-2 text-red-600 hover:text-red-700"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            </div>
             <button
               @click="addCheckboxItem"
-              class="text-sm text-blue-600 hover:text-blue-700"
+              class="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
             >
               Add Item
             </button>
           </div>
-          <div class="space-y-2">
-            <div
-              v-for="(item, index) in editedNote.items"
-              :key="item.id"
-              class="flex items-center gap-2"
-            >
+        </template>
+
+        <!-- Link Note Fields -->
+        <template v-if="editedNote.type === NOTE_TYPES.LINK">
+          <div class="space-y-4">
+            <div>
+              <label for="url" class="block text-sm font-medium text-gray-700 mb-1">URL</label>
               <input
-                type="checkbox"
-                v-model="item.checked"
-                class="rounded text-blue-600 focus:ring-blue-500"
+                id="url"
+                v-model="editedNote.url"
+                type="url"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="https://example.com"
+                required
               />
+            </div>
+            <div>
+              <label for="linkText" class="block text-sm font-medium text-gray-700 mb-1">Link Text (Optional)</label>
               <input
+                id="linkText"
+                v-model="editedNote.linkText"
                 type="text"
-                v-model="item.text"
-                class="flex-1 px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter item text"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Custom text to display for the link"
               />
-              <button
-                @click="removeCheckboxItem(index)"
-                class="p-1 text-gray-400 hover:text-red-500"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
             </div>
           </div>
-        </div>
+        </template>
       </div>
     </div>
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted } from 'vue'
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
 import { useNotesStore, NOTE_TYPES } from '~/stores/notes'
+import registry from '~/types/notes/registry'
 
 const route = useRoute()
 const router = useRouter()
@@ -142,11 +163,15 @@ const notesStore = useNotesStore()
 const note = ref(null)
 const editedNote = ref(null)
 
-const noteTypes = {
-  [NOTE_TYPES.DEFAULT]: 'Default',
-  [NOTE_TYPES.IMAGE]: 'Image',
-  [NOTE_TYPES.CHECKBOX]: 'Checkbox'
-}
+// Get note types from registry
+const noteTypes = computed(() => {
+  const types = {}
+  const configs = registry.getAllConfigs()
+  configs.forEach(config => {
+    types[config.id] = config.name
+  })
+  return types
+})
 
 onMounted(() => {
   const id = route.params.id
@@ -167,6 +192,9 @@ const handleTypeChange = () => {
     editedNote.value.imageUrl = ''
   } else if (editedNote.value.type === NOTE_TYPES.CHECKBOX) {
     editedNote.value.items = []
+  } else if (editedNote.value.type === NOTE_TYPES.LINK) {
+    editedNote.value.url = ''
+    editedNote.value.linkText = ''
   }
 }
 

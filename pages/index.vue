@@ -100,17 +100,22 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useNotesStore, NOTE_TYPES, type NoteType } from '~/stores/notes'
+import registry from '~/types/notes/registry'
 
 const notesStore = useNotesStore()
 const selectedType = ref<NoteType | null>(null)
 const showDeleteModal = ref(false)
 const noteToDelete = ref<string | null>(null)
 
-const noteTypes = {
-  [NOTE_TYPES.DEFAULT]: 'Default',
-  [NOTE_TYPES.IMAGE]: 'Image',
-  [NOTE_TYPES.CHECKBOX]: 'Checkbox'
-} as const
+// Get note types from registry
+const noteTypes = computed(() => {
+  const types: Record<number, string> = {}
+  const configs = registry.getAllConfigs()
+  configs.forEach(config => {
+    types[config.id] = config.name
+  })
+  return types
+})
 
 const filteredNotes = computed(() => {
   return selectedType.value === null
@@ -119,12 +124,9 @@ const filteredNotes = computed(() => {
 })
 
 const getTypeClass = (type: NoteType) => {
-  const classes = {
-    [NOTE_TYPES.DEFAULT]: 'bg-gray-100 text-gray-800',
-    [NOTE_TYPES.IMAGE]: 'bg-purple-100 text-purple-800',
-    [NOTE_TYPES.CHECKBOX]: 'bg-green-100 text-green-800'
-  }
-  return classes[type]
+  const configs = registry.getAllConfigs()
+  const config = configs.find(c => c.id === type)
+  return config ? `${config.color.bg} ${config.color.text}` : 'bg-gray-100 text-gray-800'
 }
 
 const addNote = () => {
